@@ -1,4 +1,4 @@
-console.log("keys are loaded!");
+console.log("The keys are locked and loaded, Sir!");
 
 exports.twitter = {
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
