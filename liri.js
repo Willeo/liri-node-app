@@ -1,39 +1,40 @@
-require("dotenv").config();
-var keys = require("./keys.js");
-var fs = require("fs");
-var inquirer = require("inquirer");
+require('dotenv').config()
+const fs = require('fs');
+const keys = require('./keys.js');
 var request = require("request");
 var Spotify = require('node-spotify-api');
+var Twitter = require('twitter');
 
-// var spotify = Spotify(keys);
-console.log(keys);
 
-const Twitter = require("twitter");
-// const client = new Twitter(keys);
 
-// user for music and movies selection
+
+// user input for music and movies selection
 let options = process.argv[2];
 let picks = process.argv.slice(3).join(" ");
 
-console.log(options);
+
 
 switch (options) {
   //twitters Case
   case "my-tweets":
     peepTweets();
     break;
-  // spotify case
+    // spotify case
   case "spotify-this-song":
     console.log("Spotty");
     spotifyMusic(picks);
     break;
-  //Movie Case
+    //Movie Case
   case "movie-this":
-    omdbData();
+    if (picks === 0) {
+      nobody();
+    } else {
+      moveTime(picks);
+    }
     break;
 
   case "do-what-it-says":
-    randoms();
+    doWhatItSays
     break;
 
   default:
@@ -42,119 +43,160 @@ switch (options) {
     );
 }
 
-var spotify = new spotify({
-  id: 667e20e6081d4d97885123482ffb6c03,
-  secret: 8d4f809423674b4bbe0cf1181acd3c8c
-});
 
-spotify.search({ type: "track", query: "All the Small Things" }, function(
-  err,
-  data
-) {
-  if (err) {
-    return console.log("Error occurred: " + err);
+
+
+
+// spotify function
+function spotifyMusic(picks) {
+  let spotify = new Spotify(keys.spotifyKeys);
+
+  if (!picks) {
+    picks = "The Sign";
   }
 
-  console.log(data);
-});
-// // Twitter function
-// function peepTweets() {
-//   const screenName = { screen_name: "willeo" };
-//   client.get("statuses/user_timeline", screenName, function(
-//     error,
-//     tweets,
-//     response
-//   ) {
-//     if (!error) {
-//       for (var i = 0; i < tweets.length; i++) {
-//         var date = tweets[i].created_at;
-//         console.log(
-//           "@WilleoSmith: " +
-//             tweets[i].text +
-//             " Created At: " +
-//             date.substring(0, 19)
-//         );
-//         console.log("-----------------------");
+  spotify.search({
+    type: 'track',
+    query: songName
+  }, function (err, data) {
+    if (err) {
+      console.log('Error occurred: ' + err);
+      return;
+    } else {
+      output = space + "================= LIRI FOUND THIS FOR YOU...==================" +
+        space + "Song Name: " + "'" + songName.toUpperCase() + "'" +
+        space + "Album Name: " + data.tracks.items[0].album.name +
+        space + "Artist Name: " + data.tracks.items[0].album.artists[0].name +
+        space + "URL: " + data.tracks.items[0].album.external_urls.spotify + "\n\n\n";
+      console.log(output);
 
-//         //adds text to log.txt file
-//         fs.appendFile(
-//           "log.txt",
-//           "@WilleoSmith: " +
-//             tweets[i].text +
-//             " Created At: " +
-//             date.substring(0, 19)
-//         );
-//         fs.appendFile("log.txt", "-----------------------");
-//       }
-//     } else {
-//       console.log("Error occurred");
-//     }
-//   });
-// }
+      fs.appendFile("log.txt", output, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+      });
+    };
+  });
+}
+
+
+
+
+
+// // Twitter function
+function peepTweets() {
+  var client = new Twitter(keys.twitterKey);
+  const screenName = {
+    screen_name: "willeoSmith"
+  };
+
+  client.get("statuses/user_timeline", screenName, function (
+    error,
+    tweets,
+    response
+  ) {
+    if (!error) {
+      for (var i = 0; i < tweets.length; i++) {
+        var date = tweets[i].created_at;
+        console.log(
+          "WilleoSmith: " +
+          tweets[i].text +
+          " Created At: " +
+          date.substring(0, 19)
+        );
+        console.log("-----------------------");
+
+        //adds text to log.txt file
+        fs.appendFile(
+          "log.txt",
+          "@WilleoSmith: " +
+          tweets[i].text +
+          " Created At: " +
+          date.substring(0, 19)
+        );
+        fs.appendFile("log.txt", "-----------------------");
+      }
+    } else {
+      console.log("Error occurred" + error);
+    }
+  });
+}
+
+
+
+
+
 
 //Imdb URL shortcut
-// function omdbData(movie) {
-//   let omdbURL =
-//     "http://www.omdbapi.com/?t=" + movie + "&plot=short&tomatoes=true";
-//   // Imdb request funciton
-//   request(omdbURL, function(error, response, body) {
-//     // If the request is successful
-//     if (!error && response.statusCode === 200) {
-//       console.log("The name of the movie is: " + JSON.parse(body).Title);
-//       console.log(
-//         "The year the movie was releaseed is: " + JSON.parse(body).Year
-//       );
-//       console.log("The imdb rating is: " + JSON.parse(body).imdbRating);
-//       console.log(
-//         "The Rotten Tomatoes ratings: " + JSON.parse(body).tomatoRating
-//       );
-//       console.log(
-//         "The orgin country of the movie is: " + JSON.parse(body).Country
-//       );
-//       console.log("The language of the movie: " + JSON.parse(body).Language);
-//       console.log("The plot of the movie is: " + JSON.parse(body).Plot);
-//       console.log(
-//         "The staring Actors of the movie are: " + JSON.parse(body).Actors
-//       );
-//       console.log("The movie's rating is: " + body);
-//     } else {
-//       console.log("Error occurred.");
-//     }
-//   });
-//   //adds text to log.txt
-//   fs.appendFile("log.txt", "Title: " + body.Title);
-//   fs.appendFile("log.txt", "Release Year: " + body.Year);
-//   fs.appendFile("log.txt", "IMdB Rating: " + body.imdbRating);
-//   fs.appendFile("log.txt", "Country: " + body.Country);
-//   fs.appendFile("log.txt", "Language: " + body.Language);
-//   fs.appendFile("log.txt", "Plot: " + body.Plot);
-//   fs.appendFile("log.txt", "Actors: " + body.Actors);
-//   fs.appendFile("log.txt", "Rotten Tomatoes Rating: " + body.tomatoRating);
-//   fs.appendFile("log.txt", "Rotten Tomatoes URL: " + body.tomatoURL);
+function moveTime(picks) {
+  let omdbURL =
+    "http://www.omdbapi.com/?t=" + picks + "&y=&plot=short&apikey=33981212";
+  // Imdb request funciton
+  request(omdbURL, function (error, response, body) {
+    console.log(body);
+    let jsonData = JSON.parse(body);
 
-//   if (movie === "Mr. Nobody") {
-//     console.log("-----------------------");
-//     console.log(
-//       "If you haven't watched 'Mr. Nobody,' then you should: http://www.imdb.com/title/tt0485947/"
-//     );
-//     console.log("It's on Netflix!");
+    console.log(jsonData);
+    // If the request is successful
+    if (!error && response.statusCode === 200) {
+      console.log("The name of the movie is: " + jsonData.Title);
+      console.log("The year releaseed is: " + jsonData.Year);
+      console.log("Imdb rating is: " + jsonData.imdbRating);
+      console.log("Rotten Tomatoes gave it: " + jsonData.tomatoRating);
+      console.log("The orgin country: " + jsonData.Country);
+      console.log("The language of the movie: " + jsonData.Language);
+      console.log("The plot: " + jsonData.Plot);
+      console.log("The Actors are: " + jsonData.Actors);
+      console.log("The movie's rating is: " + body);
 
-//     //adds text to log.txt
-//     fs.appendFile("log.txt", "-----------------------");
-//     fs.appendFile(
-//       "log.txt",
-//       "If you haven't watched 'Mr. Nobody,' then you should: http://www.imdb.com/title/tt0485947/"
-//     );
-//     fs.appendFile("log.txt", "It's on Netflix!");
-//   }
-// }
+    } else {
 
-// Spotify function - GET https://api.spotify.com/v1/search
+      console.log("Error occurred.");
 
-/* 
-A comma-separated list of item types to search across. 
-Valid types are: album , artist, playlist, and track. 
-Search results include hits from all the specified item types. 
-For example: q=name:abacab&type=album, 
-track returns both albums and tracks with “abacab” 
-included in their name.*/
+    }
+    //adds text to log.txt
+    fs.appendFile("log.txt", "Title: " + jsonData.Title);
+    fs.appendFile("log.txt", "Release Year: " + jsonData.Year);
+    fs.appendFile("log.txt", "IMdB Rating: " + jsonData.imdbRating);
+    fs.appendFile("log.txt", "Country: " + jsonData.Country);
+    fs.appendFile("log.txt", "Language: " + jsonData.Language);
+    fs.appendFile("log.txt", "Plot: " + jsonData.Plot);
+    fs.appendFile("log.txt", "Actors: " + jsonData.Actors);
+    fs.appendFile("log.txt", "Rotten Tomatoes Rating: " + jsonData.tomatoRating);
+    fs.appendFile("log.txt", "Rotten Tomatoes URL: " + jsonData.tomatoURL);
+
+  });
+
+  function nobody() {
+    if (picks === "Mr. Nobody") {
+
+      console.log(
+        "If you haven't watched 'Mr. Nobody,' then you should: http://www.imdb.com/title/tt0485947/"
+      );
+      console.log("It's on Netflix!");
+
+      //adds text to log.txt
+      fs.appendFile("log.txt", "-----------------------");
+      fs.appendFile(
+        "log.txt",
+        "If you haven't watched 'Mr. Nobody,' then you should: http://www.imdb.com/title/tt0485947/"
+      );
+      fs.appendFile("log.txt", "It's on Netflix!");
+    }
+
+  }
+
+  let doWhatItSays = function () {
+    fs.readFile("random.txt", "utf8", function (error, data) {
+      console.log(data);
+      writeToLog(data);
+      let dataArr = data.split(',')
+
+      if (dataArr.length == 2) {
+        pick(dataArr[0], dataArr[1]);
+      } else if (dataArr.length == 1) {
+        pick(dataArr[0]);
+      }
+
+    });
+  }
+}
